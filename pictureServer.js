@@ -88,6 +88,21 @@ serial.pipe(parser);
 parser.on('data', function(data) {
   console.log('Data:', data);
   io.emit('server-msg', data);
+
+  switch(data) {
+	case "light":
+        var imageName = new Date().toString().replace(/[&\/\\#,+()$~%.'":*?<>{}\s-]/g, '');
+
+        console.log('making a making a picture at'+ imageName); // Second, the name is logged to the console.
+
+    //Third, the picture is  taken and saved to the `public/`` folder
+         NodeWebcam.capture('public/'+imageName, opts, function( err, data ) {
+         io.emit('newPicture',(imageName+'.jpg'));
+	});
+  }
+
+
+
 });
 //----------------------------------------------------------------------------//
 
