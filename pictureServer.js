@@ -28,6 +28,8 @@ var SerialPort = require('serialport'); // serial library
 var Readline = SerialPort.parsers.Readline; // read serial data as lines
 //-- Addition:
 var NodeWebcam = require( "node-webcam" );// load the webcam module
+var gm = require('gm').subClass({imageMagick: true});
+var fs = require('fs');
 
 //---------------------- WEBAPP SERVER SETUP ---------------------------------//
 // use express to create the simple webapp
@@ -91,14 +93,7 @@ parser.on('data', function(data) {
 
   switch(data) {
 	case "light":
-        var imageName = new Date().toString().replace(/[&\/\\#,+()$~%.'":*?<>{}\s-]/g, '');
-
-        console.log('making a making a picture at'+ imageName); // Second, the name is logged to the console.
-
-    //Third, the picture is  taken and saved to the `public/`` folder
-         NodeWebcam.capture('public/'+imageName, opts, function( err, data ) {
-         io.emit('newPicture',(imageName+'.jpg'));
-	});
+		takepic();
   }
 
 
@@ -130,15 +125,7 @@ io.on('connect', function(socket) {
     /// First, we create a name for the new picture.
     /// The .replace() function removes all special characters from the date.
     /// This way we can use it as the filename.
-    var imageName = new Date().toString().replace(/[&\/\\#,+()$~%.'":*?<>{}\s-]/g, '');
-
-    console.log('making a making a picture at'+ imageName); // Second, the name is logged to the console.
-
-    //Third, the picture is  taken and saved to the `public/`` folder
-    NodeWebcam.capture('public/'+imageName, opts, function( err, data ) {
-    io.emit('newPicture',(imageName+'.jpg')); ///Lastly, the new name is send to the client web browser.
-    /// The browser will take this new name and load the picture from the public folder.
-  });
+    takepic();
 
   });
   // if you get the 'disconnect' message, say the user disconnected
@@ -147,3 +134,23 @@ io.on('connect', function(socket) {
   });
 });
 //----------------------------------------------------------------------------//
+
+function takepic(){
+        var imageName = new Date().toString().replace(/[&\/\\#,+()$~%.'":*?<>{}\s-]/g, '');
+
+        console.log(' making a picture at'+ imageName); // Second, the name is logged to the console.
+
+    //Third, the picture is  taken and saved to the `public/`` folder
+         NodeWebcam.capture('public/'+imageName, opts, function( err, data ) {
+		gm('public/' + imageName + '.jpg').magnify(4).write('public/'+imageName+'.jpg', function(err){
+			if(!err){
+				console.log("WRITING");
+				io.emit('newPicture', (imageName+'.jpg'));
+			}
+			else{
+				console.log("ERROR");
+				console.log(err);
+			}
+		});
+	});
+}
